@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    RED.nodes.registerType('semantic-recognition',{
+        category: 'function',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "white-globe.png",
+        label: function() {
+            return this.name||"semantic-recognition";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="semantic-recognition">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="semantic-recognition">
+    <p>功能:语义识别</p>
+    <p>输入:msg.payload(待识别文本信息)</p>
+    <p>输出:msg.payload(回复文本信息)</p>
+</script>

@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    RED.nodes.registerType('speech-synthesizer',{
+        category: 'function',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "white-globe.png",
+        label: function() {
+            return this.name||"speech-synthesizer";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="speech-synthesizer">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="speech-synthesizer">
+    <p>功能:将消息转化成音频存放在app.js启动目录中</p>
+    <p>输入:msg.payload(文本信息)</p>
+    <p>输出:msg(与输入相同)</p>
+</script>

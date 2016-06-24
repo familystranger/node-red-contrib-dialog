@@ -1,0 +1,28 @@
+<script type="text/javascript">
+    RED.nodes.registerType('voice-recognition',{
+        category: 'function',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "white-globe.png",
+        label: function() {
+            return this.name||"voice-recognition";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="voice-recognition">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="voice-recognition">
+    <p>功能:语音识别</p>
+    <p>输入:读取音频</p>
+    <p>输出:msg.payload(音频对应的文字)</p>
+</script>
