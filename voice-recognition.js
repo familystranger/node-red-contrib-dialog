@@ -7,43 +7,65 @@ module.exports = function(RED) {
     var redis = require("redis");
     var request = require('request');
     var fs = require('fs');
+    var co = require('co');
     const EventEmitter = require('events');
     function VoiceRecognition(n) {
         RED.nodes.createNode(this,n);
         var node = this;
         var payload = "";
-        var myEmitter = new EventEmitter();
-        var client = redis.createClient();
+        let num = 0;
+        let fill = "red";
+        let shape = "ring";
+        let text = 'recognition';
+        let nodethis = null;
         this.on('input', function(msg) {
-            client.hgetall("baiduConfig", function (err, obj) {
-                client.quit();
-                if (err) console.log(err) ;
-                let voicePath = msg.payload;
-                console.log('voicePath',voicePath);
-                myEmitter.on('readFile', (tok) => {
-                fs.readFile(voicePath,function(err,data){
+            nodethis =this;
+            num +=1;
+            if(num>0){
+                fill = "green",shape="dot", text = num+" recogniting";
+            }
+            this.status({fill:fill,shape:shape,text:text});
+            let client = redis.createClient();
+            co(function*(){
+                let baiduConfig = yield new Promise((resolve,reject) => {
+                    client.hgetall("baiduConfig", (err, obj) => {
+                        client.quit();
+                        if (err) console.log(err) ;
+                        resolve(obj);
+                    });
+                });
+                let accessToken = yield new Promise((resolve,reject) => {
+                    // console.log()
+                    request('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id='+baiduConfig['APIKey']+'&client_secret='+baiduConfig['secretKey'], function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            let access_token = JSON.parse(body)['access_token'];
+                            resolve(access_token);
+                        }
+                        console.log(error);
+                    });
+                });
+                let requestBody = yield new Promise((resolve,reject) =>{
+                    fs.readFile(msg.payload,function(err,data){
                     var len = data.length;
                     var cuid = 'baidu_workshop';
                     var format = 'wav';
                     var rate = 16000;
                     var channel = 1;
-                    var token = tok;
+                    var token = accessToken;
                     var speech = data.toString('base64');
                     var body ={
                         'format':format,'rate':rate,'channel':channel,'token':token,'cuid':cuid,'len':len,'speech':speech
                     };
-                    myEmitter.emit('getWorld',body);
+                    resolve(body);
                     });
                 });
-
-                myEmitter.on('getWorld',(body) => {
-
-                    var options = {
+                let worlds = yield new Promise((resolve,reject) => {
+                    let options = {
                         url: 'http://vop.baidu.com/server_api',
                         headers: {
                             'Content-Type':'application/json'
                         },
-                        body:JSON.stringify(body)
+                        body:JSON.stringify(requestBody)
                     };
                     function callback(error, response, body) {
                         if (!error && response.statusCode == 200) {
@@ -54,21 +76,19 @@ module.exports = function(RED) {
                                 console.log(result.length);
                                 msg.payload = result[0];
                             }
+                            num-=1;
+                            if(num<1){
+                                fill = "red",shape="ring", text = num+" recognition";
+                            }else{
+                                text = num+" recogniting";
+                            }
+                            nodethis.status({fill:fill,shape:shape,text:text});
                             node.send(msg);
+                            resolve('');
                         }
                     }
-
                     request(options, callback);
-                })
-
-                request('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id='+obj['APIKey']+'&client_secret='+obj['secretKey'], function (error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        //console.log(JSON.parse(body)['access_token']);
-                        let access_token = JSON.parse(body)['access_token'];
-                        //console.log(access_token);
-                        myEmitter.emit('readFile',access_token);
-                    }
-                })
+                });
             });
         });
     }
