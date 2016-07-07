@@ -17,6 +17,7 @@ module.exports = function(RED) {
         let shape = "ring";
         let text = 'recognition';
         let nodethis = null;
+        let accessToken = null;
         this.on('input', function(msg) {
             var client = redis.createClient();
             nodethis = this;
@@ -35,15 +36,17 @@ module.exports = function(RED) {
                         resolve(obj);
                     })
                 });
-                let accessToken = yield new Promise((resolve,reject) => {
-                    request('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id='+baiduConfig['APIKey']+'&client_secret='+baiduConfig['secretKey'], function (error, response, body) {
+                if(!accessToken){
+                    accessToken = yield new Promise((resolve,reject) => {
+                        request('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id='+baiduConfig['APIKey']+'&client_secret='+baiduConfig['secretKey'], function (error, response, body) {
                         if (!error && response.statusCode == 200) {
-                            
                             let access_token = JSON.parse(body)['access_token'];
                             resolve(access_token);
-                        }
-                    })
-                });
+                            }
+                        });
+                    });
+                }
+                
                 let getVoice = yield new Promise((resolve,reject) => {
                     let d=encodeURIComponent(msg.payload);
                     msg.payload = __dirname+'/'+msg.payload+'.mp3';
@@ -55,11 +58,11 @@ module.exports = function(RED) {
                         .pipe(fs.createWriteStream(msg.payload).on('finish',function() {
                             num-=1;
                             if(num<1){
-                                fill = "red",shape="ring", text = num+" recognition";
+                                nodethis.status({});
                             }else{
                                 text = num+" recogniting";
+                                nodethis.status({fill:fill,shape:shape,text:text});
                             }
-                            nodethis.status({fill:fill,shape:shape,text:text});
                             node.send(msg);
                             resolve('');
                         }))

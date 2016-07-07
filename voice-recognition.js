@@ -18,6 +18,7 @@ module.exports = function(RED) {
         let shape = "ring";
         let text = 'recognition';
         let nodethis = null;
+        let accessToken = null;
         this.on('input', function(msg) {
             nodethis =this;
             num +=1;
@@ -34,16 +35,17 @@ module.exports = function(RED) {
                         resolve(obj);
                     });
                 });
-                let accessToken = yield new Promise((resolve,reject) => {
-                    // console.log()
+                if(!accessToken){
+                    accessToken = yield new Promise((resolve,reject) => {
                     request('https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id='+baiduConfig['APIKey']+'&client_secret='+baiduConfig['secretKey'], function (error, response, body) {
-                        if (!error && response.statusCode == 200) {
-                            let access_token = JSON.parse(body)['access_token'];
-                            resolve(access_token);
-                        }
-                        console.log(error);
+                            if (!error && response.statusCode == 200) {
+                                let access_token = JSON.parse(body)['access_token'];
+                                resolve(access_token);
+                            }
+                        });
                     });
-                });
+                }
+                
                 let requestBody = yield new Promise((resolve,reject) =>{
                     fs.readFile(msg.payload,function(err,data){
                     var len = data.length;

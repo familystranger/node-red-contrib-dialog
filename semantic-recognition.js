@@ -29,12 +29,11 @@ module.exports = function(RED) {
                     msg.payload=data;
                     num-=1;
                     if(num<1){
-                        fill = "red",shape="ring", text = num+" recognition";
+                        nodethis.status({});
                     }else{
                         text = num+" recogniting";
+                        nodethis.status({fill:fill,shape:shape,text:text});
                     }
-                    nodethis.status({fill:fill,shape:shape,text:text});
-                    node.warn('semantic-recognition');
                     node.send(msg);
                 })
                 client.quit();
